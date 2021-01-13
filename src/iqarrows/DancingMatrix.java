@@ -63,6 +63,16 @@ public class DancingMatrix {
 		void unlinkUD() {
 			this.down.link(this.up, "up");
 		}
+		
+		void relinkLR() {
+			this.right.link(this, "left");
+			this.left.link(this, "right");
+		}
+		
+		void relinkUD() {
+			this.down.link(this, "up");
+			this.up.link(this, "down");
+		}
 	}
 	//The individual nodes responsible for the headers of the columns
 	private class ColumnNode extends DancingNode {
@@ -72,6 +82,28 @@ public class DancingMatrix {
 		ColumnNode(String name) { 
 			super();
 			this.name = name;
+		}
+		
+		ColumnNode cover() {
+			this.unlinkLR();
+			for (DancingNode i = this.down; i != this; i = i.down) {
+				for (DancingNode j = i.right; j != i; j = j.right) {
+					j.unlinkUD();
+					j.column.size--;
+				}
+			}
+			
+			return this;
+		}
+		
+		void uncover() {
+			for (DancingNode i = this.up; i != this; i = i.up) {
+				for (DancingNode j = i.left; j != i; j = j.left) {
+					j.relinkUD();
+					j.column.size++;
+				}
+			}
+			this.relinkLR();
 		}
 	}
 	
@@ -84,17 +116,7 @@ public class DancingMatrix {
 //		n1.linkLeft(n2);
 //		return n2;
 //	}
-	
 
-	protected void coverColumn(ColumnNode cn) {
-		cn.unlinkLR();
-		for (DancingNode i = cn.down; i != cn; i = i.down) {
-			for (DancingNode j = i.right; j != i; j = j.right) {
-				j.unlinkUD();
-				j.column.size--;
-			}
-		}
-	}
 	
 	public void fromBinaryMatrix(boolean[][] matrix, String[] names) {	
 		final int COLS = names.length;
@@ -125,11 +147,6 @@ public class DancingMatrix {
 	}
 	
 	public void view() {	
-		if (root.right == root) { //handle the dancing matrix being empty (except for the root element ofc)
-			System.out.println("The Dancing matrix contains only a root element.");
-			return;
-		}
-		
 		for (ColumnNode cn = (ColumnNode) root.right; cn != root; cn = (ColumnNode) cn.right) {
 			String ret = cn.name + "-->>";
 			for (DancingNode c = cn.down; c != cn; c = c.down) {
@@ -141,7 +158,11 @@ public class DancingMatrix {
 	}
 	
 	public void test() {
-		coverColumn((ColumnNode) root.right); 
+		view();
+		ColumnNode cn = ((ColumnNode) root.right).cover();
+		view();
+		cn.uncover();
+		view();
 	}
 
 }
