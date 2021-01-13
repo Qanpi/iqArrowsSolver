@@ -1,65 +1,81 @@
 package iqarrows;
 
+import java.util.ArrayList;
+
 public class DancingMatrix {
-	private Node root;
-	
-	private int rows;
-	private int cols;
+	private ColumnNode root;
 
 	DancingMatrix() {
-		root = new Node();
+		root = new ColumnNode("root");
 	}
 	
 	//A node class that is used for inheritance
-	private class Node {
-		Node left, right, up, down;
+	private class DancingNode {
+		DancingNode left, right, up, down;
+		ColumnNode column;
 		
-		Node() {
+		DancingNode() {
 			left = right = up = down = this;
 		}
 		
-		void linkLeft(Node n) {
-			this.left = n;
-			n.right = this;
+		DancingNode(ColumnNode cn) {
+			this();
+			column = cn;
+		}
+			
+		void link(DancingNode n, String dir) {
+			switch (dir) {
+				case "left":
+					this.left = n;
+					n.right = this;
+					break;
+				case "right":
+					this.right = n;
+					n.left = this;
+					break;
+				case "up":
+					this.up = n;
+					n.down = this;
+					break;
+				case "down":
+					this.down = n;
+					n.up = this;
+					break;
+			}
 		}
 		
-		void linkRight(Node n) {
-			this.right = n;
-			n.left = this;
+		DancingNode hookRight(DancingNode n) { 
+			this.right.link(n, "left");
+			this.link(n, "right");
+			return n;
+		}
+
+		DancingNode hookDown(DancingNode n) {
+			this.down.link(n, "up");
+			this.link(n, "down");
+			return n; 
 		}
 		
-		void linkUp(Node n) {
-			this.up = n;
-			n.down = this;
+		void unlinkLR() {
+			this.right.link(this.left, "left");
 		}
 		
-		void linkDown(Node n) {
-			this.down = n;
-			n.up = this;
+		void unlinkUD() {
+			this.down.link(this.up, "up");
 		}
 	}
 	//The individual nodes responsible for the headers of the columns
-	private class ColumnNode extends Node {
+	private class ColumnNode extends DancingNode {
 		int size;
 		String name;
-		
+				
 		ColumnNode(String name) { 
+			super();
 			this.name = name;
 		}
 	}
 	
-	//The cells/nodes themselves
-	private class Cell extends Node {
-		ColumnNode column;
-		boolean value;
-		
-		Cell(ColumnNode cn, boolean value) {
-			this.column = cn;
-			this.value = value;
-		}
-	}
-	
-	public Node getRoot() {
+	public ColumnNode getRoot() {
 		return root;
 	}
 	
@@ -69,82 +85,75 @@ public class DancingMatrix {
 //		return n2;
 //	}
 	
-	private Node insertRight(Node n1, Node n2) { 
-		n1.right.linkLeft(n2);
-		n1.linkRight(n2);
-		return n2;
-	}
-	
-//	Node insertUp(Node n1, Node n2) {
-//		n1.up.linkDown(n2);
-//		n1.linkUp(n2);
-//		return n2;
-//	}
 
-	private Node insertDown(Node n1, Node n2) {
-		n1.down.linkUp(n2);
-		n1.linkDown(n2);
-		return n2;
+	protected void coverColumn(ColumnNode cn) {
+		cn.unlinkLR();
+		for (DancingNode i = cn.down; i != cn; i = i.down) {
+			for (DancingNode j = i.right; j != i; j = j.right) {
+				j.unlinkUD();
+				j.column.size--;
+			}
+		}
 	}
 	
 	public void fromBinaryMatrix(boolean[][] matrix, String[] names) {	
-		cols = names.length;
-		rows = matrix[0].length; //assuming that all the rows in a matrix are of equal size
+		final int COLS = names.length;
+		final int ROWS = matrix[0].length; //assuming that all the rows in a matrix are of equal size
+		ArrayList<ColumnNode> columnNodes = new ArrayList<ColumnNode>();
 		
-		for (int i=0; i<names.length; i++) {
+		for (int i=0; i<COLS; i++) {
 			ColumnNode cn = new ColumnNode(names[i]);
-			insertRight(root.left, cn);
-			
-			for (boolean[] row : matrix) {
-				Cell c = new Cell(cn, row[i]);
-				insertDown(cn.up, c);
-				if (c.value == true) {cn.size += 1;} //keep count of all the 1s (trues)
-				 
-				if (cn.left != root) {
-					Node leftNeighbour = c.up.left.down;
-					insertRight(leftNeighbour, c);
-				}
+			root.left.hookRight(cn);
+			columnNodes.add(cn);
+		}
+		
+		for (int i=0; i<ROWS; i++) {
+			DancingNode prev = null; 
+			for (int j=0; j<COLS; j++) {
+				if (matrix[i][j] == false) continue;
+				
+				ColumnNode cn = columnNodes.get(j);
+				DancingNode c = new DancingNode(cn);
+				cn.up.hookDown(c);
+				
+				if (prev == null) prev = c;
+				prev = prev.hookRight(c);
+				
+				cn.size += 1; //keep count of all the 1s (trues)				
 			}
 		}
 	}
 	
-	public void coverColumn() {
-		
-	}
-	
-	public void view() {
-		Object[] names = new String[cols];
-		Object[] sizes = new Integer[cols];
-		Object[][] values = new Boolean[rows][cols];
-		
+	public void view() {	
 		if (root.right == root) { //handle the dancing matrix being empty (except for the root element ofc)
-			System.out.println("The Dancing matrix only contains a root element.");
+			System.out.println("The Dancing matrix contains only a root element.");
 			return;
 		}
 		
-		//Store elements in array to later print them out in a table format
-		//WARNING: The below loop is a mess. I can't come up with a better way to do it though. 
-		Node i = root.right;
-		for (int c=0; c<cols; c++) { 
-			ColumnNode columnNode = (ColumnNode) i; //type-casting to ColumnNode in order to access .name
-			names[c] = columnNode.name;
-			sizes[c] = columnNode.size;
-			
-			Node j = i.down;
-			for (int r=0; r<rows; r++) {
-				Cell cell = (Cell) j; //type-casting to Cell in order to access .value
-				values[r][c] = cell.value;
-				j = j.down;
+		for (ColumnNode cn = (ColumnNode) root.right; cn != root; cn = (ColumnNode) cn.right) {
+			String ret = cn.name + "-->>";
+			for (DancingNode c = cn.down; c != cn; c = c.down) {
+				ret += c.column.name + "-->"; 
 			}
-			
-			i = i.right;  
+			System.out.println(ret); 
 		}
-		
-		//Print out how the matrix looks like for debugging purposes
-		System.out.format("%15s%15s%15s%15s\n", names);
-		System.out.format("%15s%15s%15s%15s\n\n", sizes);
-		for (Object[] row : values) {System.out.format("%15b%15b%15b%15b\n", row);}
+		System.out.println();
 	}
 	
+	public void test() {
+		coverColumn((ColumnNode) root.right); 
+	}
 
 }
+
+
+/*
+ * TODO:
+ * !- Lots of cleanup
+ * 	!- Method returns
+ * 	!- View function
+ * 	!- Loops
+ *  !- Cols and rows variables
+ *  !- Scopes and OOP
+ * 
+ * */
