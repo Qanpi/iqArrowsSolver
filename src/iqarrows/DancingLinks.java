@@ -1,11 +1,12 @@
 package iqarrows;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class DancingMatrix {
+public class DancingLinks {
 	private ColumnNode root;
 
-	DancingMatrix() {
+	DancingLinks() {
 		root = new ColumnNode("root");
 	}
 	
@@ -107,21 +108,12 @@ public class DancingMatrix {
 		}
 	}
 	
-	public ColumnNode getRoot() {
-		return root;
-	}
-	
-//	private Node insertLeft(Node n1, Node n2) {
-//		n1.left.linkRight(n2);
-//		n1.linkLeft(n2);
-//		return n2;
-//	}
-
-	
 	public void fromBinaryMatrix(boolean[][] matrix, String[] names) {	
+		
+		final int ROWS = matrix.length; //assuming that all the rows in a matrix are of equal size
 		final int COLS = names.length;
-		final int ROWS = matrix[0].length; //assuming that all the rows in a matrix are of equal size
-		ArrayList<ColumnNode> columnNodes = new ArrayList<ColumnNode>();
+		List<ColumnNode> columnNodes = new ArrayList<ColumnNode>();
+		
 		
 		for (int i=0; i<COLS; i++) {
 			ColumnNode cn = new ColumnNode(names[i]);
@@ -135,34 +127,75 @@ public class DancingMatrix {
 				if (matrix[i][j] == false) continue;
 				
 				ColumnNode cn = columnNodes.get(j);
-				DancingNode c = new DancingNode(cn);
-				cn.up.hookDown(c);
+				DancingNode n = new DancingNode(cn);
+				cn.up.hookDown(n);
 				
-				if (prev == null) prev = c;
-				prev = prev.hookRight(c);
+				if (prev == null) prev = n;
+				prev = prev.hookRight(n);
 				
 				cn.size += 1; //keep count of all the 1s (trues)				
 			}
 		}
 	}
 	
+	private List<DancingNode> answer = new ArrayList<DancingNode>(); 
+	private int total;
+	
+	public void search(int k) {
+		if (root.right == root) {
+			handleAnswer();
+			total++;
+			return;
+		}
+		
+		ColumnNode cn = (ColumnNode) root.right; 
+		cn.cover();
+		
+		for (DancingNode i = cn.down; i != cn; i = i.down) {
+			answer.add(i);
+			for (DancingNode j = i.right; j != i; j = j.right) {
+				j.column.cover();
+			}
+			
+			search(k + 1);
+			// Clean up if the path is a dead end
+			answer.remove(k);
+			cn = i.column;
+			for (DancingNode j = i.left; j != i; j = j.left) {
+				j.column.uncover();
+			}
+		}
+		
+		cn.uncover();
+		return;
+	}
+	
+	private void handleAnswer() {
+		System.out.println("A solution has been found. Yay!");
+		
+		for (DancingNode n : answer) {
+			System.out.print(n.column.name + "-> ");
+			
+			for (DancingNode j = n.right; j !=n; j = j.right) {
+				int i = Integer.parseInt(j.column.name) - 6;
+				int x = i % 6;
+				int y = (i - x) / 6;
+				System.out.print(String.format("[%d, %d]", x, y));
+			}
+			System.out.println(" Solution N:" + total);				
+		}
+		
+	}
+	
 	public void view() {	
 		for (ColumnNode cn = (ColumnNode) root.right; cn != root; cn = (ColumnNode) cn.right) {
 			String ret = cn.name + "-->>";
-			for (DancingNode c = cn.down; c != cn; c = c.down) {
-				ret += c.column.name + "-->"; 
+			for (DancingNode n = cn.down; n != cn; n = n.down) {
+				ret += n.column.name + "-->"; 
 			}
 			System.out.println(ret); 
 		}
 		System.out.println();
-	}
-	
-	public void test() {
-		view();
-		ColumnNode cn = ((ColumnNode) root.right).cover();
-		view();
-		cn.uncover();
-		view();
 	}
 
 }
@@ -176,5 +209,7 @@ public class DancingMatrix {
  * 	!- Loops
  *  !- Cols and rows variables
  *  !- Scopes and OOP
+ * - Fix the weird answer doubling issue
+ * - Fix the fucking fromBinaryMatrix bug
  * 
  * */

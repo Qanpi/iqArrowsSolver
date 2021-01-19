@@ -9,14 +9,63 @@ public class Mapper {
 	private final int ROWS = 3;
 	private final int COLS = 6;
 	
-	enum Color {
-		ORANGE,
-		YELLOW,
-		GREEN,
-		PURPLE,
-		RED,
-		BLUE
-	}
+	private String[] colors = {"orange", "yellow", "green", "purple", "red", "blue"};
+	
+	int[][][][] shapes = {
+			{
+				 {{0,1}, 
+				  {1,1}},
+				 {{1,0}, 
+			      {1,1}},
+				 {{1,1}, 
+			      {1,0}}, 
+				 {{1,1},
+				  {0,1}}
+			},
+			{
+				 {{0,1}, 
+				  {1,1}},
+				 {{1,0}, 
+			      {1,1}},
+				 {{1,1}, 
+			      {1,0}}, 
+				 {{1,1},
+				  {0,1}}
+			},
+			{
+				 {{0,1}, 
+				  {1,1}},
+				 {{1,0}, 
+			      {1,1}},
+				 {{1,1}, 
+			      {1,0}}, 
+				 {{1,1},
+				  {0,1}}
+			},
+			{
+				 {{1,1}},
+				 {{1}, 
+			      {1}},
+			},
+			{
+				 {{1}, 
+				  {1},
+				  {1}},
+				 {{1,1,1}},
+		    },
+			{
+				 {{0,1}, 
+				  {0,1},
+				  {1,1}},
+				 {{1,0,0}, 
+				  {1,1,1}},
+				 {{1,1}, 
+				  {1,0},
+				  {1,0}}, 
+				 {{1,1,1}, 
+				  {0,0,1}},
+			},
+	};
 	
 	private class Permutation {
 		ArrayList<int[]> occupies; 
@@ -26,51 +75,48 @@ public class Mapper {
 		}
 	}
 	
-	private class Piece {
+	private class Shape {
 		ArrayList<Permutation> permutations = new ArrayList<>(); 
 		
-		int[][][] shapes;
-		Color color;
+		int[][] matrix;
+		int color;
 		
-		Piece (int[][][] s, Color c) {
-			shapes = s;
+		Shape (int[][] m, int c) {
+			matrix = m;
 			color = c;
 		}
 		
-		void generatePositions(){
-			for (int[][] shape : this.shapes) {
-				int h = shape.length, w = shape.length;
-				
-				for (int i=0; i<=ROWS-h; i++) {
-					for (int j=0; j<=COLS-w; j++) {
-						
-						ArrayList<int[]> indeces = new ArrayList<>();
-						for (int k=0; k<h; k++) { // loop through each square of the shape
-							for (int l=0; l<w; l++) {
-								if (shape[k][l] == 1) {
-									indeces.add(new int[] {k + j, l + i});
-								}
+		void generatePermutations(){
+			int h = matrix.length, w = matrix[0].length;
+			
+			for (int i=0; i<=ROWS-h; i++) {
+				for (int j=0; j<=COLS-w; j++) {
+					
+					ArrayList<int[]> indeces = new ArrayList<>();
+					for (int k=0; k<h; k++) { // loop through each square of the shape
+						for (int l=0; l<w; l++) {
+							if (matrix[k][l] == 1) {
+								indeces.add(new int[] {l + j, k + i});
 							}
 						}
-						Permutation p = new Permutation(indeces);
-						permutations.add(p);
 					}
+					Permutation p = new Permutation(indeces);
+					permutations.add(p);
 				}
 			}
 		}
 		
 	}
 	
-	private void append(Piece pc) {
-		for (Permutation p : pc.permutations) {
+	private void append(Shape s) {
+		for (Permutation p : s.permutations) {
 			boolean[] row = new boolean[6 + ROWS*COLS];
 			
-			int colorIndex = pc.color.ordinal();
-			row[colorIndex] = true;
+			row[s.color] = true;
 			
 			for (int[] square : p.occupies) {
 				int x = square[0], y = square[1];
-				int index = 5 + y * 6 + x;
+				int index = 6 + y * 6 + x;
 				row[index] = true;
 			}
 			map.add(row);
@@ -78,26 +124,39 @@ public class Mapper {
 		
 	}
 	
-	void view() {
+	public void view() {
 		for (boolean[] ar : map) {
 			System.out.println(Arrays.toString(ar));			
 		}
 	}
 	
-	public void test() {
-		int[][][] matrixRepr = new int[][][]{
-										 {{0,1}, 
-										  {1,1}},
-										 {{1,0}, 
-									      {1,1}},
-										 {{1,1}, 
-									      {1,0}}, 
-										 {{1,1,
-										   0,1}}};
-										 
-		Piece testPiece = new Piece(matrixRepr, Color.ORANGE);
-		testPiece.generatePositions();
-		append(testPiece);
-		view();
+	public boolean[][] createPieces() {
+		for (int i=0; i<shapes.length; i++) {
+			int[][][] piece = shapes[i];
+			for (int[][] orientation : piece) {
+				Shape s = new Shape(orientation, i); 
+				s.generatePermutations();
+				append(s);
+			}
+		}
+		
+		return toArray(map);
 	}
+	
+	private boolean[][] toArray(ArrayList<boolean[]> map) {
+		final int ROWS = map.size();
+		final int COLS = map.get(0).length;
+		
+		boolean[][] mapArray = new boolean[ROWS][COLS]; 
+		for (int i=0; i<ROWS; i++) {
+			boolean[] row = map.get(i);
+			for (int j=0; j<COLS; j++) {
+				boolean b = row[j];
+				mapArray[i][j] = b;
+			}
+		}
+		
+		return mapArray;
+	}
+	
 }
