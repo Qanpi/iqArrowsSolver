@@ -9,11 +9,11 @@ public class Solver {
 //							  {true,  true, false, true}};
 //		test.fromBinaryMatrix(matrix, names);
 //		test.search(0);
-		
-		Mapper mapper = new Mapper();
+		int[][] hints = new int[][] {{2, 0, 4}, {4, 0, 4}, {2, 1, 4}, {4, 1, 4}};
+		Mapper mapper = new Mapper(hints);
 		boolean[][] map = mapper.createPieces();
 		
-		mapper.view();
+//		mapper.view();
 		
 		int cols = map[0].length;
 		String[] names = new String[cols];

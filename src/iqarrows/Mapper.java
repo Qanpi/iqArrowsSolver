@@ -2,6 +2,7 @@ package iqarrows;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class Mapper {
 	private ArrayList<boolean[]> map = new ArrayList<>();
@@ -9,84 +10,94 @@ public class Mapper {
 	private final int ROWS = 3;
 	private final int COLS = 6;
 	
-	private String[] colors = {"orange", "yellow", "green", "purple", "red", "blue"};
+	private int[][] hints;
 	
-	int[][][][] shapes = {
+	Mapper(int[][] h) {
+		hints = h;
+	}
+	
+	private final String[] COLORS = {"orange", "yellow", "green", "purple", "red", "blue"};
+	
+	private final int[][][][] PIECES = {
 			{
-				 {{0,1}, 
-				  {1,1}},
-				 {{1,0}, 
-			      {1,1}},
-				 {{1,1}, 
-			      {1,0}}, 
+				 {{0,4}, 
+				  {1,2}},
+				 {{2,0}, 
+			      {3,1}},
+				 {{4,3}, 
+			      {2,0}}, 
+				 {{3,1},
+				  {0,4}}
+			},
+			{
+				 {{0,2}, 
+				  {3,2}},
+				 {{4,0}, 
+			      {3,3}},
+				 {{4,1}, 
+			      {4,0}}, 
 				 {{1,1},
-				  {0,1}}
+				  {0,2}}
 			},
 			{
-				 {{0,1}, 
-				  {1,1}},
-				 {{1,0}, 
-			      {1,1}},
-				 {{1,1}, 
-			      {1,0}}, 
-				 {{1,1},
-				  {0,1}}
+				 {{0,2}, 
+				  {1,4}},
+				 {{2,0}, 
+			      {1,3}},
+				 {{2,3}, 
+			      {4,0}}, 
+				 {{1,3},
+				  {0,4}}
 			},
 			{
-				 {{0,1}, 
-				  {1,1}},
-				 {{1,0}, 
-			      {1,1}},
-				 {{1,1}, 
-			      {1,0}}, 
-				 {{1,1},
-				  {0,1}}
+				 {{3,1}},
+				 {{4}, 
+			      {2}},
 			},
 			{
-				 {{1,1}},
-				 {{1}, 
-			      {1}},
-			},
-			{
-				 {{1}, 
-				  {1},
+				 {{4}, 
+				  {2},
 				  {1}},
-				 {{1,1,1}},
+				 {{2,3,1}},
+				 {{3}, 
+				  {4},
+				  {2}},
+				 {{3,1,4}},
 		    },
 			{
-				 {{0,1}, 
-				  {0,1},
-				  {1,1}},
-				 {{1,0,0}, 
-				  {1,1,1}},
-				 {{1,1}, 
+				 {{0,2}, 
+				  {0,3},
+				  {2,3}},
+				 {{3,0,0}, 
+				  {4,4,3}},
+				 {{1,4}, 
 				  {1,0},
-				  {1,0}}, 
-				 {{1,1,1}, 
+				  {4,0}}, 
+				 {{1,2,2}, 
 				  {0,0,1}},
 			},
 	};
 	
-	private class Permutation {
+	private class State {
 		ArrayList<int[]> occupies; 
 		
-		Permutation (ArrayList<int[]> indeces) {
+		State (ArrayList<int[]> indeces) {
 			occupies = indeces;
 		}
 	}
 	
-	private class Shape {
-		ArrayList<Permutation> permutations = new ArrayList<>(); 
+	private class Piece {
+		ArrayList<State> states = new ArrayList<>(); 
 		
 		int[][] matrix;
 		int color;
 		
-		Shape (int[][] m, int c) {
+		Piece (int[][] m, int c) {
 			matrix = m;
 			color = c;
 		}
 		
-		void generatePermutations(){
+		void calculateStates(){
 			int h = matrix.length, w = matrix[0].length;
 			
 			for (int i=0; i<=ROWS-h; i++) {
@@ -95,29 +106,37 @@ public class Mapper {
 					ArrayList<int[]> indeces = new ArrayList<>();
 					for (int k=0; k<h; k++) { // loop through each square of the shape
 						for (int l=0; l<w; l++) {
-							if (matrix[k][l] == 1) {
-								indeces.add(new int[] {l + j, k + i});
+							if (matrix[k][l] > 0) {
+								int o = matrix[k][l];
+								indeces.add(new int[] {l + j, k + i, o});
 							}
 						}
 					}
-					Permutation p = new Permutation(indeces);
-					permutations.add(p);
+					State p = new State(indeces);
+					states.add(p);
 				}
 			}
 		}
 		
 	}
 	
-	private void append(Shape s) {
-		for (Permutation p : s.permutations) {
-			boolean[] row = new boolean[6 + ROWS*COLS];
+	private void append(Piece p) {
+		for (State s : p.states) {
+			boolean[] row = new boolean[6 + ROWS*COLS + hints.length];
 			
-			row[s.color] = true;
+			row[p.color] = true;
 			
-			for (int[] square : p.occupies) {
+			for (int[] square : s.occupies) {
 				int x = square[0], y = square[1];
 				int index = 6 + y * 6 + x;
 				row[index] = true;
+				
+				for (int i=0; i<hints.length; i++) {
+					int[] hint = hints[i];
+					if(Arrays.equals(hint, square)) {
+						row[6 + ROWS*COLS + i] = true;
+					}
+				}
 			}
 			map.add(row);
 		}
@@ -131,11 +150,11 @@ public class Mapper {
 	}
 	
 	public boolean[][] createPieces() {
-		for (int i=0; i<shapes.length; i++) {
-			int[][][] piece = shapes[i];
+		for (int i=0; i<PIECES.length; i++) {
+			int[][][] piece = PIECES[i];
 			for (int[][] orientation : piece) {
-				Shape s = new Shape(orientation, i); 
-				s.generatePermutations();
+				Piece s = new Piece(orientation, i); 
+				s.calculateStates();
 				append(s);
 			}
 		}
@@ -144,13 +163,13 @@ public class Mapper {
 	}
 	
 	private boolean[][] toArray(ArrayList<boolean[]> map) {
-		final int ROWS = map.size();
-		final int COLS = map.get(0).length;
+		final int rows = map.size();
+		final int cols = map.get(0).length;
 		
-		boolean[][] mapArray = new boolean[ROWS][COLS]; 
-		for (int i=0; i<ROWS; i++) {
+		boolean[][] mapArray = new boolean[rows][cols]; 
+		for (int i=0; i<rows; i++) {
 			boolean[] row = map.get(i);
-			for (int j=0; j<COLS; j++) {
+			for (int j=0; j<cols; j++) {
 				boolean b = row[j];
 				mapArray[i][j] = b;
 			}
