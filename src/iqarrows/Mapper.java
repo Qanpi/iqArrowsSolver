@@ -16,7 +16,7 @@ public class Mapper {
 		hints = h;
 	}
 	
-	private final String[] COLORS = {"orange", "yellow", "green", "purple", "red", "blue"};
+	public final String[] COLORS = {"orange", "yellow", "green", "purple", "red", "blue"};
 	
 	private final int[][][][] PIECES = {
 			{
@@ -112,8 +112,8 @@ public class Mapper {
 							}
 						}
 					}
-					State p = new State(indeces);
-					states.add(p);
+					State s = new State(indeces);
+					states.add(s);
 				}
 			}
 		}
@@ -149,13 +149,13 @@ public class Mapper {
 		}
 	}
 	
-	public boolean[][] createPieces() {
+	public boolean[][] generateMap() {
 		for (int i=0; i<PIECES.length; i++) {
 			int[][][] piece = PIECES[i];
 			for (int[][] orientation : piece) {
-				Piece s = new Piece(orientation, i); 
-				s.calculateStates();
-				append(s);
+				Piece p = new Piece(orientation, i); 
+				p.calculateStates();
+				append(p);
 			}
 		}
 		

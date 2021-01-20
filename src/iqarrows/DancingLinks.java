@@ -139,12 +139,10 @@ public class DancingLinks {
 	}
 	
 	private List<DancingNode> answer = new ArrayList<DancingNode>(); 
-	private int total;
 	
 	public void search(int k) {
 		if (root.right == root) {
 			handleAnswer();
-			total++;
 			return;
 		}
 		
@@ -178,11 +176,16 @@ public class DancingLinks {
 			
 			for (DancingNode j = n.right; j !=n; j = j.right) {
 				int i = Integer.parseInt(j.column.name) - 6;
-				int x = i % 6;
-				int y = (i - x) / 6;
-				System.out.print(String.format("[%d, %d]", x, y));
+				if (i >= 18) {
+					int h = i % 18 + 1;
+					System.out.print(" Hint #" + String.valueOf(h));
+				} else {
+					int x = i % 6;
+					int y = (i - x) / 6;
+					System.out.print(String.format("[%d, %d]", x, y));					
+				}
 			}
-			System.out.println(" Solution N:" + total);				
+			System.out.println();
 		}
 		
 	}

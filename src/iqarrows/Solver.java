@@ -11,14 +11,18 @@ public class Solver {
 //		test.search(0);
 		int[][] hints = new int[][] {{2, 0, 4}, {4, 0, 4}, {2, 1, 4}, {4, 1, 4}};
 		Mapper mapper = new Mapper(hints);
-		boolean[][] map = mapper.createPieces();
+		boolean[][] map = mapper.generateMap();
 		
 //		mapper.view();
 		
 		int cols = map[0].length;
 		String[] names = new String[cols];
 		for (int i=0; i<cols; i++) {
-			names[i] = Integer.toString(i);
+			if (i < 6) {
+				names[i] = mapper.COLORS[i];
+			} else {
+				names[i] = String.valueOf(i);				
+			}
 		}
 		
 		DancingLinks DLX = new DancingLinks();
