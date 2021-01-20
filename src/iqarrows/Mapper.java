@@ -9,14 +9,16 @@ public class Mapper {
 	
 	private final int ROWS = 3;
 	private final int COLS = 6;
+	private int totalLength;
 	
 	private int[][] hints;
 	
 	Mapper(int[][] h) {
 		hints = h;
+		totalLength = PIECES.length + ROWS*COLS + hints.length;
 	}
 	
-	public final String[] COLORS = {"orange", "yellow", "green", "purple", "red", "blue"};
+	private final String[] COLORS = {"orange", "yellow", "green", "purple", "red", "blue"};
 	
 	private final int[][][][] PIECES = {
 			{
@@ -122,19 +124,19 @@ public class Mapper {
 	
 	private void append(Piece p) {
 		for (State s : p.states) {
-			boolean[] row = new boolean[6 + ROWS*COLS + hints.length];
+			boolean[] row = new boolean[totalLength];
 			
 			row[p.color] = true;
 			
 			for (int[] square : s.occupies) {
 				int x = square[0], y = square[1];
-				int index = 6 + y * 6 + x;
+				int index = PIECES.length + y * COLS + x;
 				row[index] = true;
 				
 				for (int i=0; i<hints.length; i++) {
 					int[] hint = hints[i];
 					if(Arrays.equals(hint, square)) {
-						row[6 + ROWS*COLS + i] = true;
+						row[totalLength - hints.length + i] = true;
 					}
 				}
 			}
@@ -143,10 +145,16 @@ public class Mapper {
 		
 	}
 	
-	public void view() {
-		for (boolean[] ar : map) {
-			System.out.println(Arrays.toString(ar));			
+	public String[] generateNames() {
+		String[] names = new String[totalLength];
+		for (int i=0; i<names.length; i++) {
+			if (i < 6) {
+				names[i] = COLORS[i];
+			} else {
+				names[i] = String.valueOf(i);				
+			}
 		}
+		return names;
 	}
 	
 	public boolean[][] generateMap() {
@@ -164,7 +172,7 @@ public class Mapper {
 	
 	private boolean[][] toArray(ArrayList<boolean[]> map) {
 		final int rows = map.size();
-		final int cols = map.get(0).length;
+		final int cols = totalLength;
 		
 		boolean[][] mapArray = new boolean[rows][cols]; 
 		for (int i=0; i<rows; i++) {
@@ -176,6 +184,12 @@ public class Mapper {
 		}
 		
 		return mapArray;
+	}
+	
+	public void view() {
+		for (boolean[] ar : map) {
+			System.out.println(Arrays.toString(ar));			
+		}
 	}
 	
 }
