@@ -4,16 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DancingLinks {
-	private boolean minimizeBranching = true;
-	
 	private ColumnNode root;
-
+	
+	protected ColumnNode getRoot() {
+		return root;
+	}
+	
 	DancingLinks() {
 		root = new ColumnNode("root");
 	}
 	
 	//A node class that is used for inheritance
-	private class DancingNode {
+	class DancingNode {
 		DancingNode left, right, up, down;
 		ColumnNode column;
 		
@@ -78,7 +80,7 @@ public class DancingLinks {
 		}
 	}
 	//The individual nodes responsible for the headers of the columns
-	private class ColumnNode extends DancingNode {
+	class ColumnNode extends DancingNode {
 		int size;
 		String name;
 				
@@ -135,85 +137,12 @@ public class DancingLinks {
 				if (prev == null) prev = n;
 				prev = prev.hookRight(n);
 				
-				cn.size += 1; //keep count of all the 1s (trues)				
+				cn.size += 1; //keep count of all the 1s (trues) for minimizing branching				
 			}
 		}
 	}
 	
-	private List<DancingNode> answer = new ArrayList<DancingNode>(); 
-	
-	public void search(int k) {
-		if (root.right == root) {
-			handleAnswer();			
-			return;
-		}
-		
-		ColumnNode cn;
-		if (minimizeBranching) cn = pickColumn();
-		else cn = (ColumnNode) root.right;
-		
-		cn.cover();
-		
-		for (DancingNode i = cn.down; i != cn; i = i.down) {
-			answer.add(i);
-			for (DancingNode j = i.right; j != i; j = j.right) {
-				j.column.cover();
-			}
-			
-			search(k + 1);
-			// Clean up if the path is a dead end
-			answer.remove(k);
-			cn = i.column;
-			for (DancingNode j = i.left; j != i; j = j.left) {
-				j.column.uncover();
-			}
-		}
-		
-		cn.uncover();
-		return;
-	}
-	
-	private ColumnNode pickColumn() {
-		int min = Integer.MAX_VALUE; 
-		ColumnNode cn = null;
-		for (ColumnNode i = (ColumnNode) root.right; i != root; i = (ColumnNode) i.right) {
-			if (i.size < min) {
-				min = i.size;
-				cn = i;
-			}
-		}
-		return cn;
-	}
-	
-	private void handleAnswer() {
-		System.out.println("A solution has been found. Yay!");
-		
-		for (DancingNode n : answer) {
-			ArrayList<Integer> row = new ArrayList<>();
-			
-			row.add(Integer.parseInt(n.column.name));
-			for (DancingNode j = n.right; j != n; j = j.right) {
-				row.add(Integer.parseInt(j.column.name));
 
-			}
-			
-			final String[] COLORS = {"orange", "yellow", "green", "purple", "red", "blue"};
-			for (int i : row) {
-				if (i < 6) {
-					System.out.print(COLORS[i] + ' ');
-				} else if (i >= 24) {
-					int h = i % 24 + 1;
-					System.out.print("Hint#" + String.valueOf(h) + ' ');
-				} else {
-					int x = i % 6;
-					int y = (i - x) / 6;
-					System.out.print(String.format("[%d, %d]", x, y) + ' ');					
-				}
-			}
-			System.out.println();
-		}
-
-	}
 	
 	public void view() {	
 		for (ColumnNode cn = (ColumnNode) root.right; cn != root; cn = (ColumnNode) cn.right) {
