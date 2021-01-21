@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DancingLinks {
+	private boolean minimizeBranching = true;
+	
 	private ColumnNode root;
 
 	DancingLinks() {
@@ -142,11 +144,14 @@ public class DancingLinks {
 	
 	public void search(int k) {
 		if (root.right == root) {
-			handleAnswer();
+			handleAnswer();			
 			return;
 		}
 		
-		ColumnNode cn = (ColumnNode) root.right; 
+		ColumnNode cn;
+		if (minimizeBranching) cn = pickColumn();
+		else cn = (ColumnNode) root.right;
+		
 		cn.cover();
 		
 		for (DancingNode i = cn.down; i != cn; i = i.down) {
@@ -168,26 +173,46 @@ public class DancingLinks {
 		return;
 	}
 	
+	private ColumnNode pickColumn() {
+		int min = Integer.MAX_VALUE; 
+		ColumnNode cn = null;
+		for (ColumnNode i = (ColumnNode) root.right; i != root; i = (ColumnNode) i.right) {
+			if (i.size < min) {
+				min = i.size;
+				cn = i;
+			}
+		}
+		return cn;
+	}
+	
 	private void handleAnswer() {
 		System.out.println("A solution has been found. Yay!");
 		
 		for (DancingNode n : answer) {
-			System.out.print(n.column.name + "-> ");
+			ArrayList<Integer> row = new ArrayList<>();
 			
-			for (DancingNode j = n.right; j !=n; j = j.right) {
-				int i = Integer.parseInt(j.column.name) - 6;
-				if (i >= 18) {
-					int h = i % 18 + 1;
-					System.out.print(" Hint #" + String.valueOf(h));
+			row.add(Integer.parseInt(n.column.name));
+			for (DancingNode j = n.right; j != n; j = j.right) {
+				row.add(Integer.parseInt(j.column.name));
+
+			}
+			
+			final String[] COLORS = {"orange", "yellow", "green", "purple", "red", "blue"};
+			for (int i : row) {
+				if (i < 6) {
+					System.out.print(COLORS[i] + ' ');
+				} else if (i >= 24) {
+					int h = i % 24 + 1;
+					System.out.print("Hint#" + String.valueOf(h) + ' ');
 				} else {
 					int x = i % 6;
 					int y = (i - x) / 6;
-					System.out.print(String.format("[%d, %d]", x, y));					
+					System.out.print(String.format("[%d, %d]", x, y) + ' ');					
 				}
 			}
 			System.out.println();
 		}
-		
+
 	}
 	
 	public void view() {	
@@ -200,7 +225,7 @@ public class DancingLinks {
 		}
 		System.out.println();
 	}
-
+	
 }
 
 

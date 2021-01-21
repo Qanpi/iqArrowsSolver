@@ -12,7 +12,10 @@ public class Solver {
 		
 		DancingLinks DLX = new DancingLinks();
 		DLX.fromBinaryMatrix(map, names);
-//		DLX.view();
+		long startTime = System.nanoTime();
 		DLX.search(0);
+		long endTime = System.nanoTime();
+		long duration = (endTime - startTime) / 1000;
+		System.out.println(String.format("The search took: %d microseconds", duration));
 	}
 } 

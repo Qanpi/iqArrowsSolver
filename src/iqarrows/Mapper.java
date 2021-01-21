@@ -2,7 +2,6 @@ package iqarrows;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 
 public class Mapper {
 	private ArrayList<boolean[]> map = new ArrayList<>();
@@ -17,8 +16,6 @@ public class Mapper {
 		hints = h;
 		totalLength = PIECES.length + ROWS*COLS + hints.length;
 	}
-	
-	private final String[] COLORS = {"orange", "yellow", "green", "purple", "red", "blue"};
 	
 	private final int[][][][] PIECES = {
 			{
@@ -148,11 +145,7 @@ public class Mapper {
 	public String[] generateNames() {
 		String[] names = new String[totalLength];
 		for (int i=0; i<names.length; i++) {
-			if (i < 6) {
-				names[i] = COLORS[i];
-			} else {
-				names[i] = String.valueOf(i);				
-			}
+			names[i] = String.valueOf(i);				
 		}
 		return names;
 	}
