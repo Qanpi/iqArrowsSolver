@@ -2,6 +2,7 @@ package iqarrows;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import iqarrows.DancingLinks.ColumnNode;
@@ -9,6 +10,9 @@ import iqarrows.DancingLinks.DancingNode;
 
 public class Solver {
 	private static boolean minimizeBranching = true;
+	
+	private static final int ROWS = 3;
+	private static final int COLS = 6;
 	
 	public boolean getMinimizeBranching() {
 		return minimizeBranching;
@@ -31,6 +35,8 @@ public class Solver {
 		DLX.fromBinaryMatrix(map, names);
 		search(0);
 		
+		Canvas canvas = new Canvas("test", 600, 300);
+		canvas.addBoard(state);
 		for (List<Integer> row : answer) {
 			final String[] COLORS = {"orange", "yellow", "green", "purple", "red", "blue"};
 			for (int i : row) {
@@ -41,7 +47,7 @@ public class Solver {
 					System.out.print("Hint#" + String.valueOf(h) + ' ');
 				} else {
 					int x = i % 6;
-					int y = (i - x) / 6;
+					int y = (i - x) / 6 - 1;
 					System.out.print(String.format("[%d, %d]", x, y) + ' ');					
 				}
 			}
@@ -51,10 +57,12 @@ public class Solver {
 	
 	private static List<DancingNode> temp = new ArrayList<>();
 	private static List<List<Integer>> answer = new ArrayList<>();
+	private static int[][] state = new int[ROWS][COLS];
 	
 	private static void search(int k) {
 		if (DLXROOT.right == DLXROOT) {
-			answer = handleAnswer();
+			generateAnswer();
+			generateState();
 			return;
 		}
 		
@@ -78,7 +86,7 @@ public class Solver {
 				j.column.uncover();
 			}
 		}
-		
+
 		cn.uncover();
 		return;
 	}
@@ -95,7 +103,7 @@ public class Solver {
 		return cn;
 	}
 	
-	private static List<List<Integer>> handleAnswer() {
+	private static void generateAnswer() {
 		System.out.println("A solution has been found. Yay!");
 		
 		List<List<Integer>> output = new ArrayList<>();
@@ -107,12 +115,33 @@ public class Solver {
 			row.add(Integer.parseInt(n.column.name));
 			for (DancingNode j = n.right; j != n; j = j.right) {
 				row.add(Integer.parseInt(j.column.name));
-
 			}
+			Collections.sort(row);
 			output.add(row);
 		}
-		
-		return output; 
+		answer = output; 
+	}
+	
+	private static void generateState() {
+		for (int i=0; i<answer.size(); i++) {
+			List<Integer> row = answer.get(i);
+			int color = -1;
+			for (int j=0; j<row.size(); j++) {
+				int n = row.get(j);
+				if (n < 6) {
+					color = n;
+				} else if (n < 24) {
+					int x = n % 6;
+					int y = (n - x) / 6 - 1;
+					state[y][x] = color;				
+				}
+			}
+		}
+	}
+	
+	public static int[][] getState() {
+		return state;
+	}
 //		for (List<Integer> row : output) {
 //			final String[] COLORS = {"orange", "yellow", "green", "purple", "red", "blue"};
 //			for (int i : row) {
@@ -129,6 +158,6 @@ public class Solver {
 //			}
 //			System.out.println();
 //		}
-	}
+//	}
 
 } 

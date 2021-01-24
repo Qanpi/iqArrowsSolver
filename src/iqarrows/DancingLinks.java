@@ -142,8 +142,6 @@ public class DancingLinks {
 		}
 	}
 	
-
-	
 	public void view() {	
 		for (ColumnNode cn = (ColumnNode) root.right; cn != root; cn = (ColumnNode) cn.right) {
 			String ret = cn.name + "-->>";
@@ -154,7 +152,6 @@ public class DancingLinks {
 		}
 		System.out.println();
 	}
-	
 }
 
 
