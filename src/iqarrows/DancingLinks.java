@@ -154,16 +154,3 @@ public class DancingLinks {
 	}
 }
 
-
-/*
- * TODO:
- * !- Lots of cleanup
- * 	!- Method returns
- * 	!- View function
- * 	!- Loops
- *  !- Cols and rows variables
- *  !- Scopes and OOP
- * - Fix the weird answer doubling issue
- * - Fix the fucking fromBinaryMatrix bug
- * 
- * */

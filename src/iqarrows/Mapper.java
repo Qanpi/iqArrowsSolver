@@ -6,15 +6,20 @@ import java.util.Arrays;
 public class Mapper {
 	private ArrayList<boolean[]> map = new ArrayList<>();
 	
-	private final int ROWS = 3;
-	private final int COLS = 6;
 	private int totalLength;
 	
 	private int[][] hints;
 	
-	Mapper(int[][] h) {
+	public int[][] getHints() {
+		return hints;
+	}
+	
+	private void setHints(int[][] h) {
 		hints = h;
-		totalLength = PIECES.length + ROWS*COLS + hints.length;
+	}
+	Mapper(int[][] h) {
+		setHints(h);
+		totalLength = PIECES.length + Board.ROWS*Board.COLS + hints.length;
 	}
 	
 	private final int[][][][] PIECES = {
@@ -99,8 +104,8 @@ public class Mapper {
 		void calculateStates(){
 			int h = matrix.length, w = matrix[0].length;
 			
-			for (int i=0; i<=ROWS-h; i++) {
-				for (int j=0; j<=COLS-w; j++) {
+			for (int i=0; i<=Board.ROWS-h; i++) {
+				for (int j=0; j<=Board.COLS-w; j++) {
 					
 					ArrayList<int[]> indeces = new ArrayList<>();
 					for (int k=0; k<h; k++) { // loop through each square of the shape
@@ -127,7 +132,7 @@ public class Mapper {
 			
 			for (int[] square : s.occupies) {
 				int x = square[0], y = square[1];
-				int index = PIECES.length + y * COLS + x;
+				int index = PIECES.length + y * Board.COLS + x;
 				row[index] = true;
 				
 				for (int i=0; i<hints.length; i++) {

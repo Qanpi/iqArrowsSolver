@@ -11,9 +11,6 @@ import iqarrows.DancingLinks.DancingNode;
 public class Solver {
 	private static boolean minimizeBranching = true;
 	
-	private static final int ROWS = 3;
-	private static final int COLS = 6;
-	
 	public boolean getMinimizeBranching() {
 		return minimizeBranching;
 	}
@@ -26,43 +23,31 @@ public class Solver {
 	private final static ColumnNode DLXROOT = DLX.getRoot();
 	
 	public static void main(String[] args) {
-		int[][] hints = new int[][] {{2, 0, 4}, {4, 0, 4}, {2, 1, 4}, {4, 1, 4}};
-		Mapper mapper = new Mapper(hints);
+		int[][] h = new int[][] {{2, 0, 4}, {4, 0, 4}, {2, 1, 4}, {4, 1, 4}};
+//		Board hints = new Board();
+		
+		Mapper mapper = new Mapper(h);
 		
 		boolean[][] map = mapper.generateMap();
 		String[] names = mapper.generateNames();
+		int[][] hints = mapper.getHints();
 		
 		DLX.fromBinaryMatrix(map, names);
 		search(0);
 		
+		Board solution = getBoard();
+		solution.setArrows(hints);
+		
 		Canvas canvas = new Canvas("test", 600, 300);
-		canvas.addBoard(state);
-		for (List<Integer> row : answer) {
-			final String[] COLORS = {"orange", "yellow", "green", "purple", "red", "blue"};
-			for (int i : row) {
-				if (i < 6) {
-					System.out.print(COLORS[i] + ' ');
-				} else if (i >= 24) {
-					int h = i % 24 + 1;
-					System.out.print("Hint#" + String.valueOf(h) + ' ');
-				} else {
-					int x = i % 6;
-					int y = (i - x) / 6 - 1;
-					System.out.print(String.format("[%d, %d]", x, y) + ' ');					
-				}
-			}
-			System.out.println();
-		}
+		canvas.showBoard(solution);
 	}
 	
 	private static List<DancingNode> temp = new ArrayList<>();
 	private static List<List<Integer>> answer = new ArrayList<>();
-	private static int[][] state = new int[ROWS][COLS];
 	
 	private static void search(int k) {
 		if (DLXROOT.right == DLXROOT) {
-			generateAnswer();
-			generateState();
+			answer = handleAnswer();
 			return;
 		}
 		
@@ -103,9 +88,7 @@ public class Solver {
 		return cn;
 	}
 	
-	private static void generateAnswer() {
-		System.out.println("A solution has been found. Yay!");
-		
+	private static List<List<Integer>> handleAnswer() {
 		List<List<Integer>> output = new ArrayList<>();
 		
 		for (int i = 0; i < temp.size(); i++) {
@@ -119,10 +102,11 @@ public class Solver {
 			Collections.sort(row);
 			output.add(row);
 		}
-		answer = output; 
+		return output; 
 	}
 	
-	private static void generateState() {
+	private static Board getBoard() {
+		int[][] data = new int[Board.ROWS][Board.COLS];
 		for (int i=0; i<answer.size(); i++) {
 			List<Integer> row = answer.get(i);
 			int color = -1;
@@ -133,31 +117,10 @@ public class Solver {
 				} else if (n < 24) {
 					int x = n % 6;
 					int y = (n - x) / 6 - 1;
-					state[y][x] = color;				
+					data[y][x] = color;				
 				}
 			}
 		}
+		return new Board(data);
 	}
-	
-	public static int[][] getState() {
-		return state;
-	}
-//		for (List<Integer> row : output) {
-//			final String[] COLORS = {"orange", "yellow", "green", "purple", "red", "blue"};
-//			for (int i : row) {
-//				if (i < 6) {
-//					System.out.print(COLORS[i] + ' ');
-//				} else if (i >= 24) {
-//					int h = i % 24 + 1;
-//					System.out.print("Hint#" + String.valueOf(h) + ' ');
-//				} else {
-//					int x = i % 6;
-//					int y = (i - x) / 6;
-//					System.out.print(String.format("[%d, %d]", x, y) + ' ');					
-//				}
-//			}
-//			System.out.println();
-//		}
-//	}
-
 } 
