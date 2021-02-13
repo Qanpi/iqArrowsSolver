@@ -1,23 +1,9 @@
 package iqarrows;
 
-import java.awt.BasicStroke;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridLayout;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Line2D;
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 
 public class Canvas extends JFrame {
@@ -25,30 +11,26 @@ public class Canvas extends JFrame {
 	public Canvas(String title, int w, int h) {
 		super(title);
 		setSize(w, h);
+		setMinimumSize(new Dimension(400, 300));
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setVisible(true);
 	}
 
 	public void showBoard(int[][][] solution) {
 		BoardPanel board = new BoardPanel(solution);
-		JPanel boardWrapper = new JPanel();
+		board.setMaximumSize(new Dimension(1000, 500));
 
-		boardWrapper.setSize(600, 300);
-		boardWrapper.add(board);
-		add(boardWrapper, BorderLayout.CENTER);
+		JPanel wrapper = new JPanel();
+		wrapper.setLayout(new FlowLayout());
+		wrapper.add(board);
 
-//		contentPane.setLayout(new FlowLayout(FlowLayout.CENTER));
-//		contentPane.add(pane);
+		getContentPane().add(wrapper, BorderLayout.CENTER);
 	}
 }
 
 @SuppressWarnings("serial")
 class BoardPanel extends JPanel {
-
-	final Color[] COLORS = {Color.ORANGE, Color.YELLOW, Color.GREEN, Color.MAGENTA, Color.RED, Color.BLUE};
-
 	private class Square extends JPanel {
-		private int size = 100;
 		private Color color;
 		private int orientation;
 
@@ -56,39 +38,58 @@ class BoardPanel extends JPanel {
 			super();
 			color = c;
 			orientation = o;
+
+			setBackground(color);
 		}
 
+		@Override
 		public void paint(Graphics g) {
+			super.paint(g);
 			Graphics2D g2 = (Graphics2D) g;
-			g2.setPaint(color);
-			g2.fill(new Rectangle2D.Double(0, 0, size, size));
 
-			if (orientation != 0) {
-				g2.setPaint(Color.BLACK);
-				g2.setStroke(new BasicStroke(5.0f));
-
-				GeneralPath arrow = new GeneralPath();
-				arrow.moveTo(size, size/2);
-				arrow.lineTo(0, size/2);
-				arrow.lineTo(size/3, size/4);
-				arrow.moveTo(0, size/2);
-				arrow.lineTo(size/3, size - size/4);
-				g2.draw(arrow);
-			}
+			Dimension size = getSize();
+			int d = Math.min(size.width, size.height);
+			g2.draw(new Rectangle2D.Double(0, 0, d, d));
 		}
 	}
 
 	BoardPanel(int[][][] solution) {
 		super();
-		setSize(600,300);
 		setLayout(new GridLayout(Board.ROWS, Board.COLS));
 
 		for (int i=0; i<Board.ROWS; i++) {
 			for (int j=0; j<Board.COLS; j++) {
 				int c = solution[i][j][0], o = solution[i][j][1];
-				Square square = new Square(COLORS[c], o);
+				Square square = new Square(Board.COLORS[c], o);
 				add(square);
 			}
+		}
+	}
+
+	@Override
+	public Dimension getPreferredSize(){
+		Dimension d = getParent().getSize();
+		Dimension max = getMaximumSize();
+		int pad = 100;
+		int height = d.height - pad;
+		if (d.width / height  > 6 / 2 / 3) { //no clue why this needs to be 2/3 instead of just 3
+			int newWidth = 6 * height / 3;
+			int newHeight = height;
+
+			if (newWidth > max.width) {
+				newWidth = max.width;
+				newHeight = max.height;
+			}
+			return new Dimension(newWidth, newHeight);
+		} else {
+			int newHeight = 3 * d.width / 6;
+			int newWidth = d.width;
+
+			if (newHeight > max.height) {
+				newHeight = max.height;
+				newWidth = max.width;
+			}
+			return new Dimension(newWidth, newHeight);
 		}
 	}
 
