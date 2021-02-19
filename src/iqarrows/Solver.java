@@ -11,12 +11,11 @@ import iqarrows.DancingLinks.DancingNode;
 public class Solver {
 	private static boolean minimizeBranching = true;
 
-	public boolean getMinimizeBranching() {
-		return minimizeBranching;
-	}
-
 	protected void setMinimizeBranching(boolean b) {
 		minimizeBranching = b;
+	}
+	public boolean getMinimizeBranching() {
+		return minimizeBranching;
 	}
 
 	private final static DancingLinks DLX = new DancingLinks();
