@@ -2,10 +2,13 @@ package iqarrows;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.*;
+
+import static java.awt.geom.Path2D.WIND_EVEN_ODD;
 
 
 public class Canvas extends JFrame {
@@ -43,9 +46,6 @@ class BoardPanel extends JPanel {
 			super();
 			color = c;
 			orientation = o;
-
-//			setBackground(color);
-//			setBorder(BorderFactory.createLineBorder(Color.WHITE));
 		}
 
 		@Override
@@ -57,13 +57,34 @@ class BoardPanel extends JPanel {
 			g2.setPaint(Board.COLORS[color]);
 			g2.fill(new Rectangle2D.Double(0, 0, s, s));
 
-//			g2.setPaint(Color.BLACK);
-//			g2.setStroke(new BasicStroke(5.0f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL));
-//
-//			if(x > 0 && snapshot[y][x-1] != color) g2.draw(new Line2D.Double(0, 0, 0, s));
-////			if(x == Board.COLS-1 || snapshot[y][x+1] != color) g2.draw(new Line2D.Double(s, 0, s, s));
-//			if(y > 0 && snapshot[y-1][x] != color) g2.draw(new Line2D.Double(0, 0, s, 0));
-////			if(y == Board.ROWS-1 || snapshot[y+1][x] != color) g2.draw(new Line2D.Double(0, s, s, s));
+			//draw an arrow if necessary
+			AffineTransform originalState = g2.getTransform();
+			AffineTransform at = new AffineTransform();
+			at.translate(s/2, s/2);
+			at.scale(0.8, 0.8);
+
+			switch(orientation){
+				case 0: return;
+				case 1: at.rotate(Math.toRadians(-180)); break;
+				case 2: at.rotate(Math.toRadians( -90)); break;
+				case 3: break; //the original is already rotated this way
+				case 4: at.rotate(Math.toRadians(  90)); break;
+			}
+			g2.setPaint(Color.WHITE);
+			g2.setStroke(new BasicStroke(s/10/2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+
+			GeneralPath arrow = new GeneralPath(GeneralPath.WIND_EVEN_ODD);
+			int xPoints[] = {-s/4, s/4, s/4, s/2,   0, -s/2, -s/4};
+			int yPoints[] = {-s/2,-s/2,   0,   0, s/2,    0,    0};
+			arrow.moveTo(xPoints[0], yPoints[0]);
+			for (int i = 1; i < xPoints.length; i++) {
+				arrow.lineTo(xPoints[i], yPoints[i]);
+			}
+			arrow.closePath();
+
+			g2.transform(at);
+			g2.draw(arrow);
+			g2.setTransform(originalState);
 		}
 	}
 
@@ -107,13 +128,14 @@ class BoardPanel extends JPanel {
 		Graphics2D g2 = (Graphics2D) g;
 
 		Dimension size = getSize();
-		int cs = snapshot[0][0].getSize().height; //stands for cell size
+		int cellSize = snapshot[0][0].getSize().height; //stands for cell size
+		int borderSize = cellSize / 10;
 
 		g2.setPaint(Color.WHITE);
-		g2.setStroke(new BasicStroke(cs/10));
+		g2.setStroke(new BasicStroke(borderSize));
 		g2.draw(new Rectangle2D.Double(0, 0, size.width, size.height));
 
-		g2.setStroke(new BasicStroke(cs/10/2));
+		g2.setStroke(new BasicStroke(borderSize/2));
 		for(int i=0; i < Board.ROWS; i++){
 			for (int j=0; j < Board.COLS; j++) {
 				int curr = snapshot[i][j].color;
@@ -122,11 +144,11 @@ class BoardPanel extends JPanel {
 
 				AffineTransform originalState = g2.getTransform();
 				AffineTransform offset = new AffineTransform();
-				offset.translate(j*cs, i*cs);
+				offset.translate(j*cellSize, i*cellSize);
 				g2.transform(offset);
 
-				if(nextX != -1 && curr != nextX) g2.draw(new Line2D.Double(cs, 0, cs, cs));
-				if(nextY != -1 && curr != nextY) g2.draw(new Line2D.Double(0, cs, cs, cs));
+				if(nextX != -1 && curr != nextX) g2.draw(new Line2D.Double(cellSize, 0, cellSize, cellSize));
+				if(nextY != -1 && curr != nextY) g2.draw(new Line2D.Double(0, cellSize, cellSize, cellSize));
 				g2.setTransform(originalState);
 			}
 		}

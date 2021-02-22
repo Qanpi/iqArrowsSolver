@@ -13,10 +13,10 @@ public class Mapper {
 	public int[][] getHints() {
 		return hints;
 	}
-
 	private void setHints(int[][] h) {
 		hints = h;
 	}
+
 	Mapper(int[][] h) {
 		setHints(h);
 		totalLength = PIECES.length + Board.ROWS*Board.COLS + hints.length;
