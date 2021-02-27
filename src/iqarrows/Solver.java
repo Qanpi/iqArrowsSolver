@@ -32,7 +32,7 @@ public class Solver {
 		int[][][] solution = getBoard();
 
 		Canvas canvas = new Canvas("IQ Arrows Solver", 600, 300);
-		canvas.showBoard(solution);
+		canvas.emptyBoard();
 	}
 
 	private static List<DancingNode> temp = new ArrayList<>();

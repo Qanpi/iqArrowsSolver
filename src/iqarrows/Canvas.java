@@ -1,6 +1,8 @@
 package iqarrows;
 
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
@@ -20,13 +22,17 @@ public class Canvas extends JFrame {
 		setVisible(true);
 	}
 
+	public void emptyBoard(){
+		BoardPanel board = new BoardPanel();
+		board.setMaximumSize(new Dimension(1000, 500));
+
+		getContentPane().setLayout(new FlowLayout());
+		getContentPane().add(board);
+	}
+
 	public void showBoard(int[][][] solution) {
 		BoardPanel board = new BoardPanel(solution);
 		board.setMaximumSize(new Dimension(1000, 500));
-
-//		JPanel wrapper = new JPanel();
-//		wrapper.setLayout(new FlowLayout());
-//		wrapper.add(board);
 
 		getContentPane().setLayout(new FlowLayout());
 		getContentPane().add(board);
@@ -37,12 +43,26 @@ public class Canvas extends JFrame {
 class BoardPanel extends JPanel {
 	//the snapshot is used to determine how to draw borders (where not to draw them)
 	private Square[][] snapshot = new Square[Board.ROWS][Board.COLS];
-	private class Square extends JPanel {
+	class Square extends JPanel {
 		private int x, y;
-		private int color;
+		private Color color;
 		private int orientation;
 
-		Square(int x, int y, int c, int o) {
+		public Color getColor() {
+			return color;
+		}
+		public void setColor(Color color) {
+			this.color = color;
+		}
+
+		public int getOrientation() {
+			return orientation;
+		}
+		public void setOrientation(int orientation) {
+			this.orientation = orientation;
+		}
+
+		Square(int x, int y, Color c, int o) {
 			super();
 			color = c;
 			orientation = o;
@@ -54,7 +74,7 @@ class BoardPanel extends JPanel {
 			Graphics2D g2 = (Graphics2D) g;
 
 			int s = getSize().height;
-			g2.setPaint(Board.COLORS[color]);
+			g2.setPaint(color);
 			g2.fill(new Rectangle2D.Double(0, 0, s, s));
 
 			//draw an arrow if necessary
@@ -88,6 +108,21 @@ class BoardPanel extends JPanel {
 		}
 	}
 
+	BoardPanel(){
+		super();
+		setLayout(new GridLayout(Board.ROWS, Board.COLS));
+
+		PanelListener listener = new PanelListener();
+		for (int i=0; i<Board.ROWS; i++) {
+			for (int j=0; j<Board.COLS; j++) {
+				Square square = new Square(j, i, Color.GRAY, 0);
+				square.addMouseListener(listener);
+				snapshot[i][j] = square;
+				add(square);
+			}
+		}
+	}
+
 	BoardPanel(int[][][] solution) {
 		super();
 		setLayout(new GridLayout(Board.ROWS, Board.COLS));
@@ -95,7 +130,7 @@ class BoardPanel extends JPanel {
 		for (int i=0; i<Board.ROWS; i++) {
 			for (int j=0; j<Board.COLS; j++) {
 				int c = solution[i][j][0], o = solution[i][j][1];
-				Square square = new Square(j, i, c, o);
+				Square square = new Square(j, i, Board.COLORS[c], o);
 				snapshot[i][j] = square;
 				add(square);
 			}
@@ -138,17 +173,17 @@ class BoardPanel extends JPanel {
 		g2.setStroke(new BasicStroke(borderSize/2));
 		for(int i=0; i < Board.ROWS; i++){
 			for (int j=0; j < Board.COLS; j++) {
-				int curr = snapshot[i][j].color;
-				int nextX = j + 1 < Board.COLS ? snapshot[i][j+1].color : -1;
-				int nextY = i + 1 < Board.ROWS ? snapshot[i+1][j].color : -1;
+				Color curr = snapshot[i][j].color;
+				Color nextX = j + 1 < Board.COLS ? snapshot[i][j+1].color : Color.BLACK;
+				Color nextY = i + 1 < Board.ROWS ? snapshot[i+1][j].color : Color.BLACK;
 
 				AffineTransform originalState = g2.getTransform();
 				AffineTransform offset = new AffineTransform();
 				offset.translate(j*cellSize, i*cellSize);
 				g2.transform(offset);
 
-				if(nextX != -1 && curr != nextX) g2.draw(new Line2D.Double(cellSize, 0, cellSize, cellSize));
-				if(nextY != -1 && curr != nextY) g2.draw(new Line2D.Double(0, cellSize, cellSize, cellSize));
+				if(nextX != Color.BLACK && curr != nextX) g2.draw(new Line2D.Double(cellSize, 0, cellSize, cellSize));
+				if(nextY != Color.BLACK && curr != nextY) g2.draw(new Line2D.Double(0, cellSize, cellSize, cellSize));
 				g2.setTransform(originalState);
 			}
 		}
