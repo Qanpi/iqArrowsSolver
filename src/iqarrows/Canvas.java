@@ -1,8 +1,8 @@
 package iqarrows;
 
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
@@ -10,41 +10,95 @@ import java.awt.geom.Rectangle2D;
 
 import javax.swing.*;
 
-import static java.awt.geom.Path2D.WIND_EVEN_ODD;
-
-
 public class Canvas extends JFrame {
+	JButton solveButton = new JButton("Solve");
+	JButton resetButton = new JButton("Reset");
+	JPanel buttonPanel = new JPanel();
+	BoardPanel boardPanel = new BoardPanel();
+
 	public Canvas(String title, int w, int h) {
 		super(title);
 		setSize(w, h);
-		setMinimumSize(new Dimension(500, 324));
+		setMinimumSize(new Dimension(500, 350));
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setVisible(true);
+
+		solveButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (!PanelListener.isShowingSolution()) {
+					Board input = boardPanel.getBoard();
+					Solver.solve(input);
+				}
+			}
+		});
+
+		resetButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Board emptyBoard = new Board();
+				boardPanel.setState(emptyBoard);
+				boardPanel.repaint();
+				PanelListener.setShowingSolution(false);
+			}
+		});
+
+		buttonPanel.add(solveButton);
+		buttonPanel.add(resetButton);
+		add(buttonPanel, BorderLayout.PAGE_END);
+
+		boardPanel.setMaximumSize(new Dimension(1000, 500));
+		JPanel wrapper = new JPanel() {
+			@Override
+			public void paint(Graphics g) {
+				super.paint(g);
+				Graphics2D g2 = (Graphics2D) g;
+
+				BoardPanel board = (BoardPanel) getComponent(0);
+				int cellSize = board.getComponent(0).getSize().width;
+				String coordinates = "ABCDEFGHIONMLKJRQP";
+
+				for (int i=0; i<coordinates.length(); i++) {
+					if (i < Board.COLS) {
+						int x = cellSize * i + board.getX() + cellSize/2;
+						g2.drawString(String.valueOf(coordinates.charAt(i)), x, board.getY());
+					} else if (i < Board.COLS + Board.ROWS) {
+						int x = board.getX() + board.getWidth();
+						int y = cellSize * (i - Board.COLS) + board.getY() + cellSize/2;
+						g2.drawString(String.valueOf(coordinates.charAt(i)), x, y);
+					} else if (i < Board.COLS * 2 + Board.ROWS) {
+						int x = cellSize * (i - Board.ROWS - Board.COLS) + board.getX() + cellSize/2;
+						int y = board.getY() + board.getHeight();
+						g2.drawString(String.valueOf(coordinates.charAt(i)), x, y);
+					} else {
+						int x = board.getX();
+						int y = cellSize * (i - Board.COLS * 2 - Board.ROWS) + board.getY() + cellSize/2;
+						g2.drawString(String.valueOf(coordinates.charAt(i)), x, y);
+					}
+				}
+			}
+		};
+		wrapper.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 50));
+		wrapper.add(boardPanel);
+		add(wrapper);
 	}
 
-	public void emptyBoard(){
-		BoardPanel board = new BoardPanel();
-		board.setMaximumSize(new Dimension(1000, 500));
-
-		getContentPane().setLayout(new FlowLayout());
-		getContentPane().add(board);
+	public void displayBoard(Board board) {
+		boardPanel.setState(board);
+		boardPanel.repaint();
 	}
 
-	public void showBoard(int[][][] solution) {
-		BoardPanel board = new BoardPanel(solution);
-		board.setMaximumSize(new Dimension(1000, 500));
-
-		getContentPane().setLayout(new FlowLayout());
-		getContentPane().add(board);
+	public void displayError(String msg) {
+		JOptionPane.showMessageDialog(this, msg, "Input error", JOptionPane.ERROR_MESSAGE);
 	}
 }
 
 @SuppressWarnings("serial")
 class BoardPanel extends JPanel {
 	//the snapshot is used to determine how to draw borders (where not to draw them)
-	private Square[][] snapshot = new Square[Board.ROWS][Board.COLS];
-	class Square extends JPanel {
-		private int x, y;
+	private CellPanel[][] currentState = new CellPanel[Board.ROWS][Board.COLS];
+
+	class CellPanel extends JPanel {
 		private Color color;
 		private int orientation;
 
@@ -62,10 +116,10 @@ class BoardPanel extends JPanel {
 			this.orientation = orientation;
 		}
 
-		Square(int x, int y, Color c, int o) {
+		CellPanel(Board.Cell cell) {
 			super();
-			color = c;
-			orientation = o;
+			color = cell.getColor();
+			orientation = cell.getOrientation();
 		}
 
 		@Override
@@ -112,29 +166,33 @@ class BoardPanel extends JPanel {
 		super();
 		setLayout(new GridLayout(Board.ROWS, Board.COLS));
 
+		Board emptyBoard = new Board();
+
 		PanelListener listener = new PanelListener();
 		for (int i=0; i<Board.ROWS; i++) {
 			for (int j=0; j<Board.COLS; j++) {
-				Square square = new Square(j, i, Color.GRAY, 0);
-				square.addMouseListener(listener);
-				snapshot[i][j] = square;
-				add(square);
+				Board.Cell cell = emptyBoard.getState()[i][j];
+				CellPanel cellPanel = new CellPanel(cell);
+				currentState[i][j] = cellPanel;
+				cellPanel.addMouseListener(listener);
+				add(cellPanel);
 			}
 		}
 	}
 
-	BoardPanel(int[][][] solution) {
-		super();
-		setLayout(new GridLayout(Board.ROWS, Board.COLS));
-
-		for (int i=0; i<Board.ROWS; i++) {
+	public void setState(Board board){
+		for(int i=0; i<Board.ROWS; i++) {
 			for (int j=0; j<Board.COLS; j++) {
-				int c = solution[i][j][0], o = solution[i][j][1];
-				Square square = new Square(j, i, Board.COLORS[c], o);
-				snapshot[i][j] = square;
-				add(square);
+				Board.Cell cell = board.getState()[i][j];
+				CellPanel cellPanel = currentState[i][j];
+				cellPanel.setColor(cell.getColor());
+				cellPanel.setOrientation(cell.getOrientation());
 			}
 		}
+	}
+
+	public Board getBoard(){
+		return new Board(currentState);
 	}
 
 	@Override
@@ -163,7 +221,7 @@ class BoardPanel extends JPanel {
 		Graphics2D g2 = (Graphics2D) g;
 
 		Dimension size = getSize();
-		int cellSize = snapshot[0][0].getSize().height; //stands for cell size
+		int cellSize = getComponent(0).getSize().height; //stands for cell size
 		int borderSize = cellSize / 10;
 
 		g2.setPaint(Color.WHITE);
@@ -173,17 +231,17 @@ class BoardPanel extends JPanel {
 		g2.setStroke(new BasicStroke(borderSize/2));
 		for(int i=0; i < Board.ROWS; i++){
 			for (int j=0; j < Board.COLS; j++) {
-				Color curr = snapshot[i][j].color;
-				Color nextX = j + 1 < Board.COLS ? snapshot[i][j+1].color : Color.BLACK;
-				Color nextY = i + 1 < Board.ROWS ? snapshot[i+1][j].color : Color.BLACK;
+				Color curr = currentState[i][j].getColor();
 
 				AffineTransform originalState = g2.getTransform();
 				AffineTransform offset = new AffineTransform();
 				offset.translate(j*cellSize, i*cellSize);
 				g2.transform(offset);
 
-				if(nextX != Color.BLACK && curr != nextX) g2.draw(new Line2D.Double(cellSize, 0, cellSize, cellSize));
-				if(nextY != Color.BLACK && curr != nextY) g2.draw(new Line2D.Double(0, cellSize, cellSize, cellSize));
+				if(j + 1 < Board.COLS && curr != currentState[i][j+1].getColor())
+					g2.draw(new Line2D.Double(cellSize, 0, cellSize, cellSize));
+				if(i + 1 < Board.ROWS && curr != currentState[i+1][j].getColor())
+					g2.draw(new Line2D.Double(0, cellSize, cellSize, cellSize));
 				g2.setTransform(originalState);
 			}
 		}

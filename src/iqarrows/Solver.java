@@ -9,6 +9,7 @@ import iqarrows.DancingLinks.ColumnNode;
 import iqarrows.DancingLinks.DancingNode;
 
 public class Solver {
+	private static Canvas canvas;
 	private static boolean minimizeBranching = true;
 
 	protected void setMinimizeBranching(boolean b) {
@@ -18,25 +19,35 @@ public class Solver {
 		return minimizeBranching;
 	}
 
-	private final static DancingLinks DLX = new DancingLinks();
-	private final static ColumnNode DLXROOT = DLX.getRoot();
-
-	private static int[][] h = new int[][] {{2, 0, 4}, {4, 0, 4}, {2, 1, 4}, {4, 1, 4}}; //to be re-factored
+	private static DancingLinks DLX;
+	private static ColumnNode DLXROOT;
 
 	public static void main(String[] args) {
-		Mapper mapper = new Mapper(h);
+		canvas = new Canvas("IQ Arrows Solver", 600, 300);
+	}
 
-		DLX.fromBinaryMatrix(mapper.generateMatrix(), mapper.generateNames());
+	public static void solve(Board challenge) {
+		Mapper map = new Mapper(challenge);
+		DLX = new DancingLinks();
+		DLXROOT = DLX.getRoot();
+		DLX.fromBinaryMatrix(map.genMatrix(), map.genNames());
 		search(0);
 
-		int[][][] solution = getBoard();
+		//if no solution was found, display error
+		if(answer.size() == 0) {
+			canvas.displayError("No solution was found. Please try again.");
+			return;
+		}
 
-		Canvas canvas = new Canvas("IQ Arrows Solver", 600, 300);
-		canvas.emptyBoard();
+		Board solution = getSolution();
+		canvas.displayBoard(solution);
+		PanelListener.setShowingSolution(true);
+
+		answer = new ArrayList<>();
 	}
 
 	private static List<DancingNode> temp = new ArrayList<>();
-	private static List<List<Integer>> answer = new ArrayList<>();
+	private static List<List<String>> answer = new ArrayList<>();
 
 	private static void search(int k) {
 		if (DLXROOT.right == DLXROOT) {
@@ -81,16 +92,16 @@ public class Solver {
 		return cn;
 	}
 
-	private static List<List<Integer>> handleAnswer() {
-		List<List<Integer>> output = new ArrayList<>();
-
+	private static List<List<String>> handleAnswer() {
+		List<List<String>> output = new ArrayList<>();
+		System.out.println(temp.size());
 		for (int i = 0; i < temp.size(); i++) {
 			DancingNode n = temp.get(i);
 
-			List<Integer> row = new ArrayList<>();
-			row.add(Integer.parseInt(n.column.name));
+			List<String> row = new ArrayList<>();
+			row.add(n.column.name);
 			for (DancingNode j = n.right; j != n; j = j.right) {
-				row.add(Integer.parseInt(j.column.name));
+				row.add(j.column.name);
 			}
 			Collections.sort(row);
 			output.add(row);
@@ -98,27 +109,34 @@ public class Solver {
 		return output;
 	}
 
-	private static int[][][] getBoard() {
+	private static Board getSolution() {
 		int[][][] data = new int[Board.ROWS][Board.COLS][2];
 		for (int i=0; i<answer.size(); i++) {
-			List<Integer> row = answer.get(i);
+			List<String> row = answer.get(i);
+
 			int color = -1;
 			for (int j=0; j<row.size(); j++) {
-				int n = row.get(j);
-				if (n < 6) {
-					color = n;
-				} else if (n < 24) {
-					int x = n % 6;
-					int y = (n - x) / 6 - 1;
-					data[y][x][0] = color;
-				} else {
-					int[] hint = h[n-24];
-					int x = hint[0], y = hint[1], o = hint[2];
+				String n = row.get(j);
+				if (!n.startsWith("h") && Integer.parseInt(n) < 6) {
+					color = Integer.parseInt(n);
+				}
+			}
+			
+			for (int j=0; j<row.size(); j++) {
+				String n = row.get(j);
+				if(n.startsWith("h")) {
+					int x = Integer.parseInt(String.valueOf(n.charAt(1)));
+					int y = Integer.parseInt(String.valueOf(n.charAt(2)));
+					int o = Integer.parseInt(String.valueOf(n.charAt(3)));
 					data[y][x][1] = o;
-					System.out.print(Arrays.toString(data[y][x]));
+				} else if (Integer.parseInt(n) > 5) {
+					int t = Integer.parseInt(n);
+					int x = t % Board.COLS;
+					int y = (t - x) / Board.COLS - 1;
+					data[y][x][0] = color;
 				}
 			}
 		}
-		return data;
+		return new Board(data);
 	}
 }

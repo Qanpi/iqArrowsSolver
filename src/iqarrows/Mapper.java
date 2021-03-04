@@ -4,22 +4,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Mapper {
+	private ArrayList<int[]> hints = new ArrayList<>();
 	private ArrayList<boolean[]> map = new ArrayList<>();
-
 	private int totalLength;
 
-	private int[][] hints;
+	Mapper(Board b) {
+		for(int i=0; i<Board.ROWS; i++) {
+			for (int j=0; j<Board.COLS; j++) {
+				Board.Cell cell = b.getState()[i][j];
 
-	public int[][] getHints() {
-		return hints;
-	}
-	private void setHints(int[][] h) {
-		hints = h;
-	}
-
-	Mapper(int[][] h) {
-		setHints(h);
-		totalLength = PIECES.length + Board.ROWS*Board.COLS + hints.length;
+				if (cell.getOrientation() != 0) {
+					hints.add(new int[]{cell.getX(), cell.getY(), cell.getOrientation()});
+				}
+			}
+		}
+		totalLength = PIECES.length + Board.ROWS*Board.COLS + hints.size();
 	}
 
 	private final int[][][][] PIECES = {
@@ -84,7 +83,6 @@ public class Mapper {
 
 	private class State {
 		ArrayList<int[]> occupies;
-
 		State (ArrayList<int[]> indeces) {
 			occupies = indeces;
 		}
@@ -135,10 +133,10 @@ public class Mapper {
 				int index = PIECES.length + y * Board.COLS + x;
 				row[index] = true;
 
-				for (int i=0; i<hints.length; i++) {
-					int[] hint = hints[i];
+				for (int i=0; i<hints.size(); i++) {
+					int[] hint = hints.get(i);
 					if(Arrays.equals(hint, square)) {
-						row[totalLength - hints.length + i] = true;
+						row[totalLength - hints.size() + i] = true;
 					}
 				}
 			}
@@ -147,15 +145,20 @@ public class Mapper {
 
 	}
 
-	public String[] generateNames() {
+	public String[] genNames() {
 		String[] names = new String[totalLength];
 		for (int i=0; i<names.length; i++) {
-			names[i] = String.valueOf(i);
+			if (i < names.length - hints.size())
+				names[i] = String.valueOf(i);
+			else {
+				int[] h = hints.get(i - (totalLength - hints.size()));
+				names[i] = 'h' + String.valueOf(h[0]) + h[1] + h[2];
+			}
 		}
 		return names;
 	}
 
-	public boolean[][] generateMatrix() {
+	public boolean[][] genMatrix() {
 		for (int i=0; i<PIECES.length; i++) {
 			int[][][] piece = PIECES[i];
 			for (int[][] orientation : piece) {
