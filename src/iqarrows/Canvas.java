@@ -68,10 +68,10 @@ public class Canvas extends JFrame {
 						g2.drawString(String.valueOf(coordinates.charAt(i)), x, y);
 					} else if (i < Board.COLS * 2 + Board.ROWS) {
 						int x = cellSize * (i - Board.ROWS - Board.COLS) + board.getX() + cellSize/2;
-						int y = board.getY() + board.getHeight();
+						int y = board.getY() + board.getHeight() + 10;
 						g2.drawString(String.valueOf(coordinates.charAt(i)), x, y);
 					} else {
-						int x = board.getX();
+						int x = board.getX() - 10;
 						int y = cellSize * (i - Board.COLS * 2 - Board.ROWS) + board.getY() + cellSize/2;
 						g2.drawString(String.valueOf(coordinates.charAt(i)), x, y);
 					}

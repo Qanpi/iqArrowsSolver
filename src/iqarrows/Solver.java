@@ -27,11 +27,15 @@ public class Solver {
 	}
 
 	public static void solve(Board challenge) {
+		long startTime = System.nanoTime();
 		Mapper map = new Mapper(challenge);
 		DLX = new DancingLinks();
 		DLXROOT = DLX.getRoot();
 		DLX.fromBinaryMatrix(map.genMatrix(), map.genNames());
 		search(0);
+		long endTime = System.nanoTime();
+		System.out.print("time: ");
+		System.out.println((endTime - startTime) / 1000000);
 
 		//if no solution was found, display error
 		if(answer.size() == 0) {
@@ -94,7 +98,6 @@ public class Solver {
 
 	private static List<List<String>> handleAnswer() {
 		List<List<String>> output = new ArrayList<>();
-		System.out.println(temp.size());
 		for (int i = 0; i < temp.size(); i++) {
 			DancingNode n = temp.get(i);
 
