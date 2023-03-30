@@ -32,11 +32,15 @@ This program allows the user to enter the starting position of the challenge thr
 1. Download or clone the repository to your local machine. 
 2. If necessary, configure the starting point to `Solver.java`
 3. Run the code to see a GUI representing the physical board.
+
 ![image](https://user-images.githubusercontent.com/61239034/168669922-842990b8-d05b-4e3c-b5ca-0dbb0b9e9b49.png)
+
 4. Enter a combination of arrows either from a challenge or randomly. Clicking again on an arrow will rotate its direction clockwise.
 
 ![image](https://user-images.githubusercontent.com/61239034/168670252-840a565a-82b6-4076-8668-25435479aef2.png)
+
 6. Press solve to generate the solution. If not possible, an error will be displayed.
+
 ![image](https://user-images.githubusercontent.com/61239034/168670335-4098950c-9d36-4e97-b654-63aa50f8b10f.png)
 ![image](https://user-images.githubusercontent.com/61239034/168670385-ed79a025-8572-4ccb-84f2-ef6bc60b91cc.png)
  
